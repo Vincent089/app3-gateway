@@ -1,0 +1,73 @@
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: auth-write-routes
+  namespace: app3
+  annotations:
+    # /auth and /revoke — session-writer intercepts the response to write/delete
+    # the Redis session entry.  No session-validator (these routes are public).
+    konghq.com/plugins: session-writer
+spec:
+  parentRefs:
+  - name: kong
+    namespace: app3
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: '/auth'
+    - path:
+        type: PathPrefix
+        value: '/revoke'
+    backendRefs:
+    - name: auth
+      kind: Service
+      port: 80
+
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: auth-verify-route
+  namespace: app3
+    # /verify — no plugins.  Called by session-validator as an internal fallback;
+    # also reachable for health checks / operator tooling.
+spec:
+  parentRefs:
+  - name: kong
+    namespace: app3
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: '/verify'
+    backendRefs:
+    - name: auth
+      kind: Service
+      port: 80
+
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata:
+  name: app3-routes
+  namespace: app3
+  annotations:
+    # App3 routes — full plugin chain: session-validator → proxy-cache.
+    konghq.com/plugins: session-validator,proxy-cache
+spec:
+  parentRefs:
+  - name: kong
+    namespace: app3
+  rules:
+  - matches:
+    - path:
+        type: PathPrefix
+        value: '/vlans'
+    - path:
+        type: PathPrefix
+        value: '/cores'
+    backendRefs:
+    - name: vlan
+      kind: Service
+      port: 80

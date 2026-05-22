@@ -1,5 +1,5 @@
-namespace:
-	kubectl apply -f manifests/namespace.yaml
+k8-gateway:
+	kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/v1.2.1/standard-install.yaml
 
 deploy-config:
 	kubectl apply -f manifests/auth-config.yaml
