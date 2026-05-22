@@ -1,0 +1,45 @@
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: session-validator
+  namespace: app3
+plugin: session-validator
+config:
+  redis_host: redis.app3.svc.cluster.local
+  redis_port: 6379
+  redis_timeout: 2000
+  auth_service_url: http://auth.app3.svc.cluster.local
+  auth_verify_timeout: 5000
+---
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: proxy-cache
+  namespace: app3
+plugin: proxy-cache
+config:
+  strategy: memory
+  memory:
+    dictionary_name: kong_db_cache
+  cache_ttl: 60
+  cache_control: false
+  request_method:
+    - GET
+    - HEAD
+  response_code:
+    - 200
+  content_type:
+    - application/json
+    - "application/json; charset=utf-8"
+---
+apiVersion: configuration.konghq.com/v1
+kind: KongPlugin
+metadata:
+  name: session-writer
+  namespace: app3
+plugin: session-writer
+config:
+  redis_host: redis.app3.svc.cluster.local
+  redis_port: 6379
+  redis_timeout: 2000
+  session_ttl: 28800

@@ -1,0 +1,104 @@
+# Kong Ingress Controller — OSS
+# Chart:   kong/kong  (helm repo add kong https://charts.konghq.com)
+# Install: helm install kong kong/kong -n app3 -f helm/kong-values.yaml --create-namespace
+
+image:
+  repository: kong
+  tag: "3.7"
+  pullPolicy: IfNotPresent
+
+replicaCount: 2
+
+# ── Kong Ingress Controller ───────────────────────────────────────────────────
+
+ingressController:
+  enabled: true
+  image:
+    repository: kong/kubernetes-ingress-controller
+    tag: "3.3"
+  ingressClass: kong
+  rbac:
+    create: true
+  watchNamespaces:
+    - app3
+
+# ── Kong environment (becomes KONG_* env vars) ───────────────────────────────
+
+env:
+  # DB-less mode — KIC drives declarative config via CRDs
+  database: "off"
+
+  # Register the custom Lua session plugin alongside built-ins.
+  # Name must match the plugin's handler.lua PRIORITY/VERSION block.
+  plugins: "bundled,session-validator,session-writer"
+
+  log_level: "notice"
+  nginx_worker_processes: "2"
+
+  # Trust forwarded headers from within the cluster.
+  # Restrict to actual pod CIDR in production.
+  trusted_ips: "10.0.0.0/8,172.16.0.0/12,192.168.0.0/16"
+  real_ip_header: "X-Forwarded-For"
+  real_ip_recursive: "on"
+
+# ── Proxy service ─────────────────────────────────────────────────────────────
+
+proxy:
+  enabled: true
+  type: ClusterIP        # s2s only — no external exposure
+  http:
+    enabled: true
+    servicePort: 80
+    containerPort: 8000
+  tls:
+    enabled: false       # terminate TLS at cluster boundary if required
+
+# ── Admin API ─────────────────────────────────────────────────────────────────
+
+admin:
+  enabled: true
+  http:
+    enabled: true
+    servicePort: 8001
+    containerPort: 8001
+  type: ClusterIP        # never expose admin API externally
+
+# ── Enterprise (disabled — OSS only) ─────────────────────────────────────────
+
+enterprise:
+  enabled: false
+
+# ── Custom plugins ────────────────────────────────────────────────────────────
+# The chart mounts each ConfigMap at the correct Lua package path and appends
+# the directory to KONG_LUA_PACKAGE_PATH automatically.
+
+plugins:
+  configMaps:
+    - name: kong-session-plugin
+      pluginName: session-validator
+    - name: kong-session-writer
+      pluginName: session-writer
+
+# ── Resources ─────────────────────────────────────────────────────────────────
+
+resources:
+  requests:
+    memory: "256Mi"
+    cpu: "100m"
+  limits:
+    memory: "512Mi"
+    cpu: "500m"
+
+# ── High availability ─────────────────────────────────────────────────────────
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
+autoscaling:
+  enabled: false
+
+# ── RBAC / service account ────────────────────────────────────────────────────
+
+serviceAccount:
+  create: true
