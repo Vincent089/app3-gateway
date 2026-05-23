@@ -62,11 +62,44 @@ spec:
   rules:
   - matches:
     - path:
-        type: PathPrefix
+        type: Exact
         value: '/vlans'
+    filters:
+    - type: URLRewrite
+      urlRewrite:
+        path:
+          type: ReplaceFullPath
+          replaceFullPath: '/vlans/'
+    backendRefs:
+    - name: vlan
+      kind: Service
+      port: 80
+  - matches:
+    - path:
+        type: Exact
+        value: '/cores'
+    filters:
+    - type: URLRewrite
+      urlRewrite:
+        path:
+          type: ReplaceFullPath
+          replaceFullPath: '/cores/'
+    backendRefs:
+    - name: vlan
+      kind: Service
+      port: 80
+  - matches:
     - path:
         type: PathPrefix
-        value: '/cores'
+        value: '/cores/'
+    backendRefs:
+    - name: vlan
+      kind: Service
+      port: 80
+  - matches:
+    - path:
+        type: PathPrefix
+        value: '/vlans/'
     backendRefs:
     - name: vlan
       kind: Service
