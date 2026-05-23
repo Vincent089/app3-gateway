@@ -54,7 +54,7 @@ metadata:
   namespace: app3
   annotations:
     # App3 routes — full plugin chain: session-validator → proxy-cache.
-    konghq.com/plugins: session-validator,proxy-cache
+    konghq.com/plugins: session-validator,redis-cache
 spec:
   parentRefs:
   - name: kong

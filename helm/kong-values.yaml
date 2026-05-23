@@ -30,7 +30,7 @@ env:
 
   # Register the custom Lua session plugin alongside built-ins.
   # Name must match the plugin's handler.lua PRIORITY/VERSION block.
-  plugins: "bundled,session-validator,session-writer"
+  plugins: "bundled,session-validator,session-writer,redis-cache"
 
   log_level: "notice"
   nginx_worker_processes: "2"
@@ -78,6 +78,8 @@ plugins:
       pluginName: session-validator
     - name: kong-session-writer
       pluginName: session-writer
+    - name: kong-redis-cache
+      pluginName: redis-cache
 
 # ── Resources ─────────────────────────────────────────────────────────────────
 

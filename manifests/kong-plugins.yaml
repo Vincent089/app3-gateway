@@ -11,18 +11,19 @@ config:
   auth_service_url: http://auth.app3.svc.cluster.local
   auth_verify_timeout: 5000
 ---
+# Replaced built-in proxy-cache (OSS memory-only) with custom redis-cache plugin
+# that uses the shared Redis instance — same pattern as session-writer.
 apiVersion: configuration.konghq.com/v1
 kind: KongPlugin
 metadata:
-  name: proxy-cache
+  name: redis-cache
   namespace: app3
-plugin: proxy-cache
+plugin: redis-cache
 config:
-  strategy: memory
-  memory:
-    dictionary_name: kong_db_cache
+  redis_host: redis.app3.svc.cluster.local
+  redis_port: 6379
+  redis_timeout: 2000
   cache_ttl: 60
-  cache_control: false
   request_method:
     - GET
     - HEAD
