@@ -104,3 +104,25 @@ spec:
     - name: vlan
       kind: Service
       port: 80
+  - matches:
+    - path:
+        type: Exact
+        value: '/vlanrestrictions'
+    filters:
+    - type: URLRewrite
+      urlRewrite:
+        path:
+          type: ReplaceFullPath
+          replaceFullPath: '/vlanrestrictions/'
+    backendRefs:
+    - name: vlan
+      kind: Service
+      port: 80
+  - matches:
+    - path:
+        type: PathPrefix
+        value: '/vlanrestrictions/'
+    backendRefs:
+    - name: vlan
+      kind: Service
+      port: 80
