@@ -45,7 +45,7 @@ env:
 
 proxy:
   enabled: true
-  type: ClusterIP        # s2s only — no external exposure
+  type: LoadBalancer     # exposes Kong on port 80 via the cluster's LB provisioner
   http:
     enabled: true
     servicePort: 80

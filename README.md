@@ -34,6 +34,17 @@ Deploy dependent infra
 
 ``kubectl apply -f manifests/redis.yaml``
 
+**Note:** auth service is also a dependency be not conversing it here. See how to deploy it in its own README.md
+
+Apply Kong resources
+
+~~~
+kubectl apply -f manifests/gateway.yaml
+kubectl apply -f manifests/kong-plugins.yaml
+kubectl apply -f manifests/http-routes.yaml
+~~~
+
+
 ### TShooting
 
 Modification to config map aren't hot swappable. Any modification made to *-cm.yaml must be rolled out this way
