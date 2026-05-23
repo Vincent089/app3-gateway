@@ -75,6 +75,14 @@ spec:
       kind: Service
       port: 80
   - matches:
+      - path:
+          type: PathPrefix
+          value: '/vlans/'
+    backendRefs:
+      - name: vlan
+        kind: Service
+        port: 80
+  - matches:
     - path:
         type: Exact
         value: '/cores'
@@ -92,14 +100,6 @@ spec:
     - path:
         type: PathPrefix
         value: '/cores/'
-    backendRefs:
-    - name: vlan
-      kind: Service
-      port: 80
-  - matches:
-    - path:
-        type: PathPrefix
-        value: '/vlans/'
     backendRefs:
     - name: vlan
       kind: Service
