@@ -5,15 +5,42 @@ metadata:
   namespace: app3
 data:
   redis.conf: |
-    maxmemory 512mb
+    maxmemory 400mb
     maxmemory-policy allkeys-lru
-    save ""
+    # RDB snapshots — written to /data/dump.rdb on the persistent volume.
+    # On restart the pod reattaches the same PVC and replays from the snapshot.
+    save 900 1      # at least 1 change in 15 min
+    save 300 10     # at least 10 changes in 5 min
+    save 60 1000    # at least 1000 changes in 1 min
+    dbfilename dump.rdb
+    dir /data
     appendonly no
     tcp-keepalive 60
     timeout 0
 ---
+# Headless service — required by StatefulSet for stable pod DNS.
+# Other services connect through the ClusterIP service below, not this one.
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-headless
+  namespace: app3
+  labels:
+    app: redis
+spec:
+  clusterIP: None
+  selector:
+    app: redis
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: 6379
+      protocol: TCP
+---
+# StatefulSet replaces Deployment — provides stable pod identity so the same
+# PVC is reattached to redis-0 on every restart.
 apiVersion: apps/v1
-kind: Deployment
+kind: StatefulSet
 metadata:
   name: redis
   namespace: app3
@@ -21,6 +48,7 @@ metadata:
     app: redis
     component: cache
 spec:
+  serviceName: redis-headless
   replicas: 1
   selector:
     matchLabels:
@@ -42,12 +70,14 @@ spec:
           volumeMounts:
             - name: config
               mountPath: /etc/redis
+            - name: data
+              mountPath: /data
           resources:
             requests:
               memory: "64Mi"
               cpu: "50m"
             limits:
-              memory: "512Mi"
+              memory: "512Mi"   # maxmemory 400mb leaves ~112MB for process overhead
               cpu: "200m"
           livenessProbe:
             exec:
@@ -65,6 +95,16 @@ spec:
         - name: config
           configMap:
             name: redis-config
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ReadWriteOnce]
+        resources:
+          requests:
+            storage: 1Gi
+        # storageClassName omitted — uses the cluster's default StorageClass.
+        # Override if you need a specific class (e.g. fast SSD).
 ---
 apiVersion: v1
 kind: Service
