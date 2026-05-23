@@ -49,6 +49,44 @@ helm upgrade kong kong/kong -n app3 -f helm/kong-values.yaml
 kubectl rollout status deployment/kong-kong -n app3
 ~~~
 
+# How to add routes
+
+Edit http-route.yaml and add your paths
+
+Paths are handled by regex inside Kong so only resource paths are needed Kong will do the rest
+
+e.g.
+~~~
+  - matches:
+    - path:
+        type: Exact
+        value: '/vlans'
+    filters:
+    - type: URLRewrite
+      urlRewrite:
+        path:
+          type: ReplaceFullPath
+          replaceFullPath: '/vlans/'
+    backendRefs:
+    - name: vlan
+      kind: Service
+      port: 80
+  - matches:
+      - path:
+          type: PathPrefix
+          value: '/vlans/'
+    backendRefs:
+      - name: vlan
+        kind: Service
+        port: 80
+~~~
+
+Use PathPrefix for direct routing, if you want your resource flex path you'd need to let Kong know what to replace it with.
+Use Exact into a filters URLRewrite + ReplaceFullPath. Order is important as Kong imports them in order if redirect 
+comes after PathPrefix it wouldn't work.
+
+Once you are done with your edit, apply back the resource manifest. Kong ingress controller sidecar will re-auto the new routes.
+
 # Later consideration
 
 Currently, using Kong OSS which is open-source but does not have official full support for some feature like caching.
