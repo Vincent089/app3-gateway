@@ -1,7 +1,4 @@
 # Kong Ingress Controller — OSS
-# Chart:   kong/kong  (helm repo add kong https://charts.konghq.com)
-# Install: helm install kong kong/kong -n app3 -f helm/kong-values.yaml --create-namespace
-
 image:
   repository: kong
   tag: "3.7"
@@ -9,7 +6,7 @@ image:
 
 replicaCount: 2
 
-# ── Kong Ingress Controller ───────────────────────────────────────────────────
+#  Kong Ingress Controller 
 
 ingressController:
   enabled: true
@@ -22,7 +19,7 @@ ingressController:
   watchNamespaces:
     - app3
 
-# ── Kong environment (becomes KONG_* env vars) ───────────────────────────────
+#  Kong environment (becomes KONG_* env vars) 
 
 env:
   # DB-less mode — KIC drives declarative config via CRDs
@@ -41,7 +38,7 @@ env:
   real_ip_header: "X-Forwarded-For"
   real_ip_recursive: "on"
 
-# ── Proxy service ─────────────────────────────────────────────────────────────
+#  Proxy service 
 
 proxy:
   enabled: true
@@ -53,7 +50,7 @@ proxy:
   tls:
     enabled: false       # terminate TLS at cluster boundary if required
 
-# ── Admin API ─────────────────────────────────────────────────────────────────
+#  Admin API 
 
 admin:
   enabled: true
@@ -63,12 +60,12 @@ admin:
     containerPort: 8001
   type: ClusterIP        # never expose admin API externally
 
-# ── Enterprise (disabled — OSS only) ─────────────────────────────────────────
+#  Enterprise (disabled — OSS only) 
 
 enterprise:
   enabled: false
 
-# ── Custom plugins ────────────────────────────────────────────────────────────
+#  Custom plugins 
 # The chart mounts each ConfigMap at the correct Lua package path and appends
 # the directory to KONG_LUA_PACKAGE_PATH automatically.
 
@@ -81,7 +78,7 @@ plugins:
     - name: kong-redis-cache
       pluginName: redis-cache
 
-# ── Resources ─────────────────────────────────────────────────────────────────
+#  Resources 
 
 resources:
   requests:
@@ -91,7 +88,7 @@ resources:
     memory: "512Mi"
     cpu: "500m"
 
-# ── High availability ─────────────────────────────────────────────────────────
+#  High availability 
 
 podDisruptionBudget:
   enabled: true
@@ -100,7 +97,7 @@ podDisruptionBudget:
 autoscaling:
   enabled: false
 
-# ── RBAC / service account ────────────────────────────────────────────────────
+#  RBAC / service account 
 
 serviceAccount:
   create: true

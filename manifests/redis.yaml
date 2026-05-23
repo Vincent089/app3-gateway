@@ -18,8 +18,6 @@ data:
     tcp-keepalive 60
     timeout 0
 ---
-# Headless service — required by StatefulSet for stable pod DNS.
-# Other services connect through the ClusterIP service below, not this one.
 apiVersion: v1
 kind: Service
 metadata:
@@ -37,8 +35,6 @@ spec:
       targetPort: 6379
       protocol: TCP
 ---
-# StatefulSet replaces Deployment — provides stable pod identity so the same
-# PVC is reattached to redis-0 on every restart.
 apiVersion: apps/v1
 kind: StatefulSet
 metadata:
@@ -103,8 +99,6 @@ spec:
         resources:
           requests:
             storage: 1Gi
-        # storageClassName omitted — uses the cluster's default StorageClass.
-        # Override if you need a specific class (e.g. fast SSD).
 ---
 apiVersion: v1
 kind: Service

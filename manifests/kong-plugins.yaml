@@ -12,7 +12,7 @@ config:
   auth_verify_timeout: 5000
 ---
 # Replaced built-in proxy-cache (OSS memory-only) with custom redis-cache plugin
-# that uses the shared Redis instance — same pattern as session-writer.
+# that uses the shared Redis instance
 apiVersion: configuration.konghq.com/v1
 kind: KongPlugin
 metadata:
