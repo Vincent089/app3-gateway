@@ -8,7 +8,7 @@ config:
   redis_host: redis.app3.svc.cluster.local
   redis_port: 6379
   redis_timeout: 2000
-  auth_service_url: http://auth.app3.svc.cluster.local
+  auth_service_url: http://auth.app3.svc.cluster.local/v1
   auth_verify_timeout: 5000
 ---
 # Replaced built-in proxy-cache (OSS memory-only) with custom redis-cache plugin
