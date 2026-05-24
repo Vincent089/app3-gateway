@@ -9,9 +9,9 @@ data:
     maxmemory-policy allkeys-lru
     # RDB snapshots — written to /data/dump.rdb on the persistent volume.
     # On restart the pod reattaches the same PVC and replays from the snapshot.
-    save 900 1      # at least 1 change in 15 min
-    save 300 10     # at least 10 changes in 5 min
-    save 60 1000    # at least 1000 changes in 1 min
+    save 900 1
+    save 300 10
+    save 60 1000
     dbfilename dump.rdb
     dir /data
     appendonly no
@@ -55,6 +55,8 @@ spec:
         app: redis
         component: cache
     spec:
+      securityContext:
+        fsGroup: 999
       containers:
         - name: redis
           image: redis:7.2-alpine
