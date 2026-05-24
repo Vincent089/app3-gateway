@@ -4,21 +4,40 @@ metadata:
   name: auth-write-routes
   namespace: app3
   annotations:
-    # /auth and /revoke — session-writer intercepts the response to write/delete
-    # the Redis session entry.  No session-validator (these routes are public).
+    # /api/auth and /api/revoke — session-writer intercepts the response to
+    # write/delete the Redis session entry. No session-validator (public routes).
     konghq.com/plugins: session-writer
 spec:
   parentRefs:
   - name: kong
     namespace: app3
   rules:
+  # /api/auth → /auth
   - matches:
     - path:
-        type: PathPrefix
-        value: '/auth'
+        type: Exact
+        value: '/api/auth'
+    filters:
+    - type: URLRewrite
+      urlRewrite:
+        path:
+          type: ReplaceFullPath
+          replaceFullPath: '/auth'
+    backendRefs:
+    - name: auth
+      kind: Service
+      port: 80
+  # /api/revoke → /revoke
+  - matches:
     - path:
-        type: PathPrefix
-        value: '/revoke'
+        type: Exact
+        value: '/api/revoke'
+    filters:
+    - type: URLRewrite
+      urlRewrite:
+        path:
+          type: ReplaceFullPath
+          replaceFullPath: '/revoke'
     backendRefs:
     - name: auth
       kind: Service
@@ -30,17 +49,24 @@ kind: HTTPRoute
 metadata:
   name: auth-verify-route
   namespace: app3
-    # /verify — no plugins.  Called by session-validator as an internal fallback;
-    # also reachable for health checks / operator tooling.
+  # /api/verify — no plugins. Called directly by operator tooling;
+  # session-validator calls the auth service directly (not through Kong).
 spec:
   parentRefs:
   - name: kong
     namespace: app3
   rules:
+  # /api/verify → /verify
   - matches:
     - path:
-        type: PathPrefix
-        value: '/verify'
+        type: Exact
+        value: '/api/verify'
+    filters:
+    - type: URLRewrite
+      urlRewrite:
+        path:
+          type: ReplaceFullPath
+          replaceFullPath: '/verify'
     backendRefs:
     - name: auth
       kind: Service
@@ -53,17 +79,19 @@ metadata:
   name: app3-routes
   namespace: app3
   annotations:
-    # App3 routes — full plugin chain: session-validator → proxy-cache.
+    # Full plugin chain: session-validator (1000) → redis-cache (100).
     konghq.com/plugins: session-validator,redis-cache
 spec:
   parentRefs:
   - name: kong
     namespace: app3
   rules:
+  # ── /api/vlans ───────────────────────────────────────────────────────────────
+  # Exact (no trailing slash): rewrite to /vlans/ so the backend never redirects.
   - matches:
     - path:
         type: Exact
-        value: '/vlans'
+        value: '/api/vlans'
     filters:
     - type: URLRewrite
       urlRewrite:
@@ -74,18 +102,28 @@ spec:
     - name: vlan
       kind: Service
       port: 80
+  # Prefix (with slash and sub-paths): strip /api, preserve remainder.
+  # PathPrefix /api/vlans/ does NOT match bare /api/vlans — no priority conflict.
   - matches:
-      - path:
-          type: PathPrefix
-          value: '/vlans/'
+    - path:
+        type: PathPrefix
+        value: '/api/vlans/'
+    filters:
+    - type: URLRewrite
+      urlRewrite:
+        path:
+          type: ReplacePrefixMatch
+          replacePrefixMatch: '/vlans/'
     backendRefs:
-      - name: vlan
-        kind: Service
-        port: 80
+    - name: vlan
+      kind: Service
+      port: 80
+
+  # ── /api/cores ───────────────────────────────────────────────────────────────
   - matches:
     - path:
         type: Exact
-        value: '/cores'
+        value: '/api/cores'
     filters:
     - type: URLRewrite
       urlRewrite:
@@ -99,15 +137,23 @@ spec:
   - matches:
     - path:
         type: PathPrefix
-        value: '/cores/'
+        value: '/api/cores/'
+    filters:
+    - type: URLRewrite
+      urlRewrite:
+        path:
+          type: ReplacePrefixMatch
+          replacePrefixMatch: '/cores/'
     backendRefs:
     - name: vlan
       kind: Service
       port: 80
+
+  # ── /api/vlanrestrictions ────────────────────────────────────────────────────
   - matches:
     - path:
         type: Exact
-        value: '/vlanrestrictions'
+        value: '/api/vlanrestrictions'
     filters:
     - type: URLRewrite
       urlRewrite:
@@ -121,7 +167,13 @@ spec:
   - matches:
     - path:
         type: PathPrefix
-        value: '/vlanrestrictions/'
+        value: '/api/vlanrestrictions/'
+    filters:
+    - type: URLRewrite
+      urlRewrite:
+        path:
+          type: ReplacePrefixMatch
+          replacePrefixMatch: '/vlanrestrictions/'
     backendRefs:
     - name: vlan
       kind: Service
